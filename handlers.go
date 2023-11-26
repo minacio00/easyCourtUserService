@@ -20,13 +20,20 @@ func hashPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if p.Password == "" {
+		http.Error(w, "empty password", http.StatusBadRequest)
+		return
+	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	w.Write([]byte(hash))
+	encoder := json.NewEncoder(w)
+	p.Password = string(hash)
+	encoder.Encode(p)
+	// w.Write(hash)
 
 }
 
@@ -38,6 +45,10 @@ func verifyPassword(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if p.Hash == "" || p.Password == "" {
+		http.Error(w, "Password and hash are required", http.StatusBadRequest)
 		return
 	}
 
