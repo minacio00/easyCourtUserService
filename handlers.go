@@ -4,10 +4,23 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/minacio00/easyCourtUserService.git/database"
+	"github.com/minacio00/easyCourtUserService/database"
 	"golang.org/x/crypto/bcrypt"
 )
 
+func generateTokenCookie(token string) *http.Cookie {
+	cookie := &http.Cookie{
+		Name:     "jwt_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+	}
+	return cookie
+}
+func setTokenCookie(w http.ResponseWriter, token string) {
+	cookie := generateTokenCookie(token)
+	http.SetCookie(w, cookie)
+}
 func hashPassword(w http.ResponseWriter, r *http.Request) {
 	var p Credentials
 
@@ -58,7 +71,7 @@ func signing(w http.ResponseWriter, r *http.Request) {
 	}
 	err = database.Db.First(&user, "email = ?", p.Email).Error
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -74,7 +87,8 @@ func signing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	setTokenCookie(w, token)
+	// json.NewEncoder(w).Encode(map[string]string{"token": token})
 
 	w.WriteHeader(http.StatusAccepted)
 

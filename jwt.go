@@ -20,7 +20,7 @@ func generateJWT(username string) (string, error) {
 	claims := &Claims{
 		Username: username,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(), // Token expires in 24 hours
 			IssuedAt:  time.Now().Unix(),
 		},
 	}
