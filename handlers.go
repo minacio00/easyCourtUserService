@@ -4,22 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/minacio00/easyCourtUserService.git/database"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type password struct {
-	Password string `json:"password"`
-	Hash     string `json:"hash"`
-}
-
 func hashPassword(w http.ResponseWriter, r *http.Request) {
-	var p password
+	var p Credentials
 
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 	if p.Password == "" {
 		http.Error(w, "empty password", http.StatusBadRequest)
 		return
@@ -33,29 +30,56 @@ func hashPassword(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	p.Password = string(hash)
 	encoder.Encode(p)
+	token, err := generateJWT(p.Email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	// w.Write(hash)
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 
 }
 
-// expects both the password and the hash
 // returns status code 200 if the password is correct
-func verifyPassword(w http.ResponseWriter, r *http.Request) {
-	var p password
+func signing(w http.ResponseWriter, r *http.Request) {
+	var p Credentials
+	var user Tenant
 
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if p.Hash == "" || p.Password == "" {
-		http.Error(w, "Password and hash are required", http.StatusBadRequest)
+
+	defer r.Body.Close()
+	if p.Password == "" || p.Email == "" {
+		http.Error(w, "Password and Email are requeried", http.StatusBadRequest)
+		return
+	}
+	err = database.Db.First(&user, "email = ?", p.Email).Error
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(p.Hash), []byte(p.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(p.Password))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
+
+	token, err := generateJWT(user.Email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+
 	w.WriteHeader(http.StatusAccepted)
+
 }
+
+//todo: implement refresh
+//todo: set the jwt as a cookie
+//todo: blacklist tokens
