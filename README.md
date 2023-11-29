@@ -1,3 +1,2 @@
 # easyCourtUserService
-
-Service for handling users, authentication.
+User authentication service for easycourt.

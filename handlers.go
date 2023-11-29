@@ -21,6 +21,7 @@ func setTokenCookie(w http.ResponseWriter, token string) {
 	cookie := generateTokenCookie(token)
 	http.SetCookie(w, cookie)
 }
+
 func hashPassword(w http.ResponseWriter, r *http.Request) {
 	var p Credentials
 
@@ -95,5 +96,4 @@ func signing(w http.ResponseWriter, r *http.Request) {
 }
 
 //todo: implement refresh
-//todo: set the jwt as a cookie
 //todo: blacklist tokens

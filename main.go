@@ -15,7 +15,7 @@ import (
 func main() {
 	addr := os.Getenv("ADDR")
 	if addr == "" {
-		log.Fatal("could not read the addres from the dockerfile")
+		log.Fatal("could not read the address from the dockerfile")
 	}
 	database.Connectdb()
 	viper.SetConfigFile(".env")
@@ -25,7 +25,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Post("/api/hashPassword", hashPassword)
 	r.Post("/api/signing", signing)
-	fmt.Println("server is running on :8081")
-	log.Fatal(http.ListenAndServe(addr, r))
+	fmt.Printf("server is running on %v", addr)
+	log.Fatal(http.ListenAndServe(":"+addr, r))
 
 }
