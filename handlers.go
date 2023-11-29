@@ -22,6 +22,7 @@ func setTokenCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, cookie)
 }
 
+// On success returns the hashed password as a json, a jwt token as a cookie
 func hashPassword(w http.ResponseWriter, r *http.Request) {
 	var p Credentials
 
@@ -41,20 +42,23 @@ func hashPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	encoder := json.NewEncoder(w)
-	p.Password = string(hash)
-	encoder.Encode(p)
+
 	token, err := generateJWT(p.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// w.Write(hash)
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+
+	setTokenCookie(w, token)
+
+	// returns the hashed password as json
+	encoder := json.NewEncoder(w)
+	p.Password = string(hash)
+	encoder.Encode(p)
 
 }
 
-// returns status code 200 if the password is correct
+// returns status code 202 if the password is correct and a jwt token as a cookie
 func signing(w http.ResponseWriter, r *http.Request) {
 	var p Credentials
 	var user Tenant
@@ -88,9 +92,8 @@ func signing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	setTokenCookie(w, token)
-	// json.NewEncoder(w).Encode(map[string]string{"token": token})
 
+	setTokenCookie(w, token)
 	w.WriteHeader(http.StatusAccepted)
 
 }
