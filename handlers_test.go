@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/minacio00/easyCourtUserService/database"
+	"github.com/minacio00/easyCourtUserService/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,7 +64,7 @@ func TestSigningHandler(t *testing.T) {
 	log.Println("Do stuff BEFORE the tests!")
 	database.Connectdb()
 	// Prepare a request body with valid credentials
-	tenant := &Tenant{
+	tenant := &models.Tenant{
 		Email:    "testUser@gmail.com",
 		Password: "testUser",
 	}

@@ -13,18 +13,24 @@ import (
 )
 
 func main() {
-	addr := os.Getenv("ADDR")
-	if addr == "" {
-		log.Fatal("could not read the address from the dockerfile")
-	}
-	database.Connectdb()
 	viper.SetConfigFile(".env")
 	viper.ReadInConfig()
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		addr = viper.GetString("ADDR")
+		if addr == "" {
+			log.Fatal("could not read the address from the dockerfile")
+		}
+	}
+	database.Connectdb()
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/api/hashPassword", hashPassword)
 	r.Post("/api/signing", signing)
+	r.Post("/api/logout", Logout)
+	//test this endpoint
+	r.Get("/api/", GetAllBlacklistedTokens)
 	fmt.Printf("server is running on %v", addr)
 	log.Fatal(http.ListenAndServe(":"+addr, r))
 
